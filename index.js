@@ -5,7 +5,9 @@ import 'dotenv/config';
 import { MongoClient, ObjectId } from 'mongodb';
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: "https://wanderlust-c.vercel.app"
+}));
 
 const PORT = process.env.PORT || 8000;
 
@@ -64,6 +66,23 @@ app.put('/update-destination/:id', async(req, res) => {
     );
 
     if (result.matchedCount === 0) {
+        return res.status(404).send({ message: 'Destination not found' });
+    }
+
+    res.send(result);
+});
+
+// DELETE API
+app.delete('/delete-destination/:id', async (req, res) => {
+    const id = req.params.id;
+
+    if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ message: 'Invalid destination id' });
+    }
+
+    const result = await destinationCollection.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
         return res.status(404).send({ message: 'Destination not found' });
     }
 
