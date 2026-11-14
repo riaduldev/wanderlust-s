@@ -2,7 +2,7 @@
 import express from 'express';
 import cors from 'cors'
 import 'dotenv/config';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 
 const app = express();
 app.use(cors());
@@ -46,6 +46,29 @@ app.get("/destinations" , async(req, res) => {
     const result = await destinationCollection.find().toArray();
     res.send(result)
 })
+
+// UPDATE API
+app.put('/update-destination/:id', async(req, res) => {
+    const id = req.params.id;
+
+    if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ message: 'Invalid destination id' });
+    }
+
+    // _id is immutable in MongoDB — never send it to $set
+    const { _id, ...updatedData } = req.body;
+
+    const result = await destinationCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updatedData }
+    );
+
+    if (result.matchedCount === 0) {
+        return res.status(404).send({ message: 'Destination not found' });
+    }
+
+    res.send(result);
+});
 
 // GET API
 app.get('/', (req, res) => {
